@@ -35,6 +35,14 @@ def load_tiff_stack(file):
         volume = imread(file, plugin='tifffile')
         return volume
 
+def normalize_data_in_window(x, w_min, w_max):
+    '''Maps data in range [w_min, w_max] to [0, 1]. Clipping of data to zero or one for values outside of [w_min, w_max]. :paramx: Input image. :paramw_min: Lower bound of window. :paramw_max: Upper bound of window. :return: Normalized tensor. '''
+    x_norm = (x - w_min) / (w_max - w_min)
+    x_norm[x_norm >= 1.0] = 1.0
+
+    x_norm[x_norm <= 0.0] = 0.0
+
+    return x_norm
 
 class DatasetFromFolder(Dataset):
     def __init__(self, data_dir, scale_factor, image_type: str, image_channels: int, patch_size=256, preupsample=False):
@@ -66,9 +74,10 @@ class DatasetFromFolder(Dataset):
         self.hr_transforms = transform_lib.Compose(
             [
                 # transform_lib.Grayscale(num_output_channels=1),
-                transform_lib.CenterCrop(hr_image_size),
+                transform_lib.RandomCrop(hr_image_size),
+                transform_lib.RandomRotation(degrees=(-90,90)),
                 transform_lib.ToTensor(),
-                transform_lib.Normalize(mean=(0.429,) * image_channels, std=(1.5,) * image_channels)
+                # transform_lib.Normalize(mean=(0.0,) * image_channels, std=(1.0,) * image_channels)
 
 
             ]
@@ -84,7 +93,8 @@ class DatasetFromFolder(Dataset):
             ]
         )
 
-        self._hr_imgs = [self.hr_transforms(Image.fromarray(img)) for img in self.filenames]
+        self._hr_imgs = [normalize_data_in_window(self.hr_transforms(Image.fromarray(img)),-1.0,1.0) for img in self.filenames]
+
         self._lr_imgs = [self.lr_transforms(img) for img in self._hr_imgs]
 
         # random.shuffle(self._hr_imgs)

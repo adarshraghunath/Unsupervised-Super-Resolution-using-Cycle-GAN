@@ -130,19 +130,6 @@ class CYCLEGAN(pl.LightningModule):
 
         # Cyclic loss
         b = hr_image.size()[0]
-        # valid = torch.ones(b, 1, 30, 30).cuda()
-
-        # adv_loss_A = self._adv_loss(self.Dy(self.G(lr_image)), ones=True)
-        # adv_loss_B = self._adv_loss(self.Dx(self.F(hr_image)), ones= True)
-        # adv_loss = (adv_loss_A + adv_loss_B) /2
-
-        # val_base = self.generator_loss(self.Dy(self.G(lr_image)), valid)
-        # val_style = self.generator_loss(self.Dx(self.F(hr_image)), valid)
-        # val_loss = (val_base + val_style) / 2
-
-        # reconstr_base = self.mae(self.G(self.F(hr_image)), hr_image)
-        # reconstr_style = self.mae(self.F(self.G(lr_image)), lr_image)
-        # reconstr_loss = (reconstr_base + reconstr_style) / 2
 
         gen_loss = 0.001 * adv_loss + content_loss
 
@@ -163,13 +150,7 @@ class CYCLEGAN(pl.LightningModule):
         # Loss Weight
         disc_loss = (D_gen_loss + D_base_valid_loss + D_style_valid_loss) / 3
 
-        # real_pred = self.discriminator(hr_image)
-        # real_loss = self._adv_loss(real_pred, ones=True)
-
-        # _, fake_pred = self._fake_pred(lr_image)
-        # fake_loss = self._adv_loss(fake_pred, ones=False)
-
-        # disc_loss = 0.5 * (real_loss + fake_loss)
+        
 
         self.log("loss/disc", disc_loss, on_step=True, on_epoch=True)
         return disc_loss
